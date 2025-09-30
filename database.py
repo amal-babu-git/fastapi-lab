@@ -55,8 +55,8 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def init_db() -> None:
-    """Initialize the database connection."""
+async def verify_db_connection() -> None:
+    """Verify database connectivity at application startup."""
     try:
         # Test the connection with proper text() wrapper for raw SQL
         async with engine.begin() as conn:
