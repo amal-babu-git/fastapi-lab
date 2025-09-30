@@ -1,0 +1,13 @@
+[project]
+name = "fastapi-learn"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "fastapi>=0.118.0",
+    "python-dotenv>=1.0.0",
+    "sqlalchemy>=2.0.43",
+    "uvicorn>=0.37.0",
+]
