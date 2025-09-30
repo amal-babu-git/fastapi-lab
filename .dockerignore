@@ -1,0 +1,111 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+.virtualenv
+
+# Environment files (IMPORTANT: Never include in Docker image)
+.env
+.env.*
+*.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+*.cover
+.hypothesis/
+
+# Documentation
+docs/_build/
+site/
+*.md
+README.md
+LICENSE
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+azure-pipelines.yml
+.circleci/
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+.dockerignore
+
+# Database data
+*.db
+*.sqlite
+*.sqlite3
+data/
+postgres-data/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+tmp/
+temp/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+wheels/
+
+# Development tools
+.editorconfig
+.pre-commit-config.yaml
+
+# Alembic (if you run migrations in container, you might want to include these)
+# migrations/
+
+# Project specific - adjust as needed
+# If you have large test data or fixtures
+tests/fixtures/
+tests/data/
+
+# Node modules (if you have any frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
