@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from models import Product
+from schemas import Product
 from database import get_session, init_db, shutdown_db
 from contextlib import asynccontextmanager
 import logging
@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting FastAPI application...")
     try:
+        # this is for test db connection on startup
         await init_db()
         logger.info("Database initialized successfully")
     except Exception as e:
