@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 # Import your models' Base
 from models import Base
 
+# Import centralized database URL builder
+from database import get_database_url
+
 # Load environment variables
 load_dotenv()
 
@@ -28,14 +31,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
-# Build DATABASE_URL from environment variables
-POSTGRES_USER = os.getenv("POSTGRES_USER", "fastapi_user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "fastapi_password")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "fastapi_db")
-
-DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+# Use centralized database URL builder to avoid duplication
+DATABASE_URL = get_database_url()
 
 # Override the sqlalchemy.url in alembic.ini with our DATABASE_URL
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

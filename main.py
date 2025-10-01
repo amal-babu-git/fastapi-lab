@@ -17,11 +17,13 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting FastAPI application...")
     try:
-        # Verify database connectivity on startup
+        # Verify database connectivity on startup (with retries)
         await verify_db_connection()
         logger.info("Database connection verified successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
+        logger.error(f"Failed to verify database connection: {e}")
+        # Re-raise to prevent app from starting with broken database
+        raise
 
     yield
 
