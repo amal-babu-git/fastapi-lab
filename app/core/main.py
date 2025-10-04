@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.core.database import get_session, verify_db_connection, shutdown_db
-from app.product.routes import router as product_router
+from app.apis.v1 import router as v1_api_router
 from contextlib import asynccontextmanager
 import logging
 
@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="FastAPI Learn", version="0.1.0", lifespan=lifespan)
 
 # Include routers
-app.include_router(product_router)
+app.include_router(v1_api_router, prefix="/api")
 
 
 @app.get("/")

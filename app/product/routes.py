@@ -14,7 +14,8 @@ from .exceptions import (
     InvalidStockThresholdError,
 )
 
-router = APIRouter(prefix="/products", tags=["products"])
+# Module router - no prefix/tags (handled by version router)
+router = APIRouter()
 
 
 @router.get("/", response_model=List[Product])
