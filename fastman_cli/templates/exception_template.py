@@ -24,14 +24,6 @@ class {class_name}NotFoundError({class_name}Exception):
         super().__init__(f"{class_name} with identifier '{{identifier}}' not found")
 
 
-class {class_name}AlreadyExistsError({class_name}Exception):
-    """Raised when attempting to create a {module_name} that already exists."""
-
-    def __init__(self, name: str):
-        self.name = name
-        super().__init__(f"{class_name} with name '{{name}}' already exists")
-
-
 class Invalid{class_name}DataError({class_name}Exception):
     """Raised when {module_name} data is invalid."""
 
