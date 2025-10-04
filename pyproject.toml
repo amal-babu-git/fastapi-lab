@@ -8,7 +8,10 @@ dependencies = [
     "alembic>=1.16.5",
     "asyncpg>=0.30.0",
     "fastapi>=0.118.0",
+    "pydantic-settings>=2.11.0",
     "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.20",
     "sqlalchemy>=2.0.43",
+    "typer>=0.19.2",
     "uvicorn>=0.37.0",
 ]

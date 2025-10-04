@@ -2,64 +2,41 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngin
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 from typing import AsyncGenerator
-import logging
-import os
 import asyncio
-from dotenv import load_dotenv
 
 # Import Base for re-export
 from .models import Base
-
-# Load environment variables
-load_dotenv()
+from .settings import settings
+from .logging import get_logger
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def get_database_url() -> str:
     """
-    Build DATABASE_URL from environment variables.
+    Build DATABASE_URL from settings.
 
     This function centralizes database URL construction to avoid duplication
     across database.py and migrations/env.py.
 
     Returns:
         str: PostgreSQL connection URL with asyncpg driver
-
-    Raises:
-        ValueError: If required environment variables are missing
     """
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-    POSTGRES_DB = os.getenv("POSTGRES_DB")
-
-    # Validate required variables
-    if not POSTGRES_USER:
-        raise ValueError("POSTGRES_USER environment variable is required")
-    if not POSTGRES_PASSWORD:
-        raise ValueError("POSTGRES_PASSWORD environment variable is required")
-    if not POSTGRES_DB:
-        raise ValueError("POSTGRES_DB environment variable is required")
-
-    return f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+    return settings.database_url
 
 
-# Build DATABASE_URL with validation
+# Build DATABASE_URL from settings
 DATABASE_URL = get_database_url()
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 # Create async engine with connection pooling
 engine: AsyncEngine = create_async_engine(
     DATABASE_URL,
-    echo=DEBUG,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_pre_ping=True,
-    pool_recycle=3600  # Recycle connections after 1 hour
+    echo=settings.DB_ECHO,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_MAX_OVERFLOW,
+    pool_timeout=settings.DB_POOL_TIMEOUT,
+    pool_pre_ping=True,  # Enable connection health checks
 )
 
 

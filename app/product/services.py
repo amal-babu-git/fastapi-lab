@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.logging import get_logger
 from .models import Product as ProductModel
 from .schemas import ProductCreate, ProductUpdate
 from .crud import product_crud
@@ -11,6 +12,9 @@ from .exceptions import (
     InsufficientStockError,
     InvalidStockThresholdError,
 )
+
+# Configure logging
+logger = get_logger(__name__)
 
 
 class ProductService:

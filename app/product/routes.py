@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 from app.core.database import get_session
+from app.core.logging import get_logger
 from .schemas import Product, ProductCreate, ProductUpdate
 from .services import ProductService
 from .exceptions import (
@@ -13,6 +14,9 @@ from .exceptions import (
     InsufficientStockError,
     InvalidStockThresholdError,
 )
+
+# Configure logging
+logger = get_logger(__name__)
 
 # Module router - no prefix/tags (handled by version router)
 router = APIRouter(prefix="/products", tags=["Products"])
