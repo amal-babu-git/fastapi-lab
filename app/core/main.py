@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from app.core.schemas import Product
 from app.core.database import get_session, verify_db_connection, shutdown_db
+from app.product.routes import router as product_router
 from contextlib import asynccontextmanager
 import logging
 
@@ -38,21 +38,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="FastAPI Learn", version="0.1.0", lifespan=lifespan)
 
-
-products = [
-    Product(id=1, name="Laptop", description="A high-end laptop",
-            price=1500.00, quantity=10),
-    Product(id=2, name="Smartphone",
-            description="A latest model smartphone", price=800.00, quantity=25),
-    Product(id=3, name="Headphones",
-            description="Noise-cancelling headphones", price=200.00, quantity=50),
-    Product(id=4, name="Monitor", description="4K UHD Monitor",
-            price=400.00, quantity=15),
-]
+# Include routers
+app.include_router(product_router)
 
 
 @app.get("/")
-def greet():
+def root():
     return "Welcome Back Aliens!"
 
 
@@ -84,55 +75,3 @@ async def test_db_connection(session: AsyncSession = Depends(get_session)):
         logger.error(f"Database connection test failed: {e}")
         raise HTTPException(
             status_code=500, detail=f"Database connection failed: {str(e)}")
-
-
-@app.get("/products")
-def get_all_products():
-    return products
-
-
-@app.get("/products/{id}")
-def get_product_by_id(id: int):
-    # products are ordered; so using binary search
-    l, r = 0, len(products) - 1
-
-    while l <= r:
-        mid = (l + r) // 2
-        if products[mid].id == id:
-            return products[mid]
-        elif products[mid].id < id:
-            l = mid + 1
-        else:
-            r = mid - 1
-
-    return "Product Not Found"
-
-
-@app.post("/products")
-def add_product(product: Product):
-    if product.id in [p.id for p in products]:
-        return "Product with given ID already exists."
-
-    products.append(product)
-
-    return products
-
-
-@app.put("/products/{id}")
-def update_product(id: int, product: Product):
-    for i, p in enumerate(products):
-        if p.id == id:
-            products[i] = product
-            return "Product Updated Successfully"
-
-    return "Product Not Found"
-
-
-@app.delete("/products/{id}")
-def delete_product(id: int):
-    for i, p in enumerate(products):
-        if p.id == id:
-            products.pop(i)
-            return "Product Deleted Successfully"
-
-    return "Product Not Found"

@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 # Import your models' Base
 from app.core.models import Base
 
+# Import all models to ensure they're registered with metadata
+from app.product.models import Product  # noqa: F401
+
 # Import centralized database URL builder
 from app.core.database import get_database_url
 
