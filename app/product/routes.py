@@ -15,7 +15,7 @@ from .exceptions import (
 )
 
 # Module router - no prefix/tags (handled by version router)
-router = APIRouter()
+router = APIRouter(prefix="/products", tags=["Products"])
 
 
 @router.get("/", response_model=List[Product])

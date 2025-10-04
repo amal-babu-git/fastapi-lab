@@ -5,4 +5,4 @@ from app.product.routes import router as product_router
 router = APIRouter(prefix="/v1")
 
 # Include module routers with their prefixes and tags
-router.include_router(product_router, prefix="/products", tags=["Products"])
+router.include_router(product_router)
