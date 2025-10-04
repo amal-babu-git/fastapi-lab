@@ -4,6 +4,15 @@ from typing import List, Dict, Any
 from app.core.database import get_session
 from .schemas import Product, ProductCreate, ProductUpdate
 from .services import ProductService
+from .exceptions import (
+    ProductException,
+    ProductNotFoundError,
+    ProductAlreadyExistsError,
+    InvalidPriceError,
+    InvalidPriceRangeError,
+    InsufficientStockError,
+    InvalidStockThresholdError,
+)
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -11,7 +20,8 @@ router = APIRouter(prefix="/products", tags=["products"])
 @router.get("/", response_model=List[Product])
 async def get_all_products(
     skip: int = Query(0, ge=0, description="Number of products to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of products to return"),
+    limit: int = Query(100, ge=1, le=1000,
+                       description="Number of products to return"),
     session: AsyncSession = Depends(get_session)
 ):
     """Get all products with pagination."""
@@ -35,10 +45,15 @@ async def get_low_stock_products(
     try:
         products = await ProductService.get_low_stock_products(session, threshold)
         return products
-    except ValueError as e:
+    except InvalidStockThresholdError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch low stock products: {str(e)}"
         )
 
 
@@ -52,10 +67,15 @@ async def get_products_by_price_range(
     try:
         products = await ProductService.get_products_by_price_range(session, min_price, max_price)
         return products
-    except ValueError as e:
+    except InvalidPriceRangeError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch products by price range: {str(e)}"
         )
 
 
@@ -66,21 +86,21 @@ async def get_product_by_id(product_id: int, session: AsyncSession = Depends(get
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found"
+            detail=f"Product with ID {product_id} not found"
         )
     return product
 
 
 @router.post("/", response_model=Product, status_code=status.HTTP_201_CREATED)
 async def create_product(
-    product_data: ProductCreate, 
+    product_data: ProductCreate,
     session: AsyncSession = Depends(get_session)
 ):
     """Create a new product."""
     try:
         product = await ProductService.create_product(session, product_data)
         return product
-    except ValueError as e:
+    except (ProductAlreadyExistsError, InvalidPriceError) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -101,47 +121,64 @@ async def update_product(
     """Update an existing product."""
     try:
         product = await ProductService.update_product(session, product_id, product_data)
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found"
-            )
         return product
-    except ValueError as e:
+    except ProductNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except (ProductAlreadyExistsError, InvalidPriceError) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update product: {str(e)}"
         )
 
 
 @router.patch("/{product_id}/stock", response_model=Product)
 async def update_product_stock(
     product_id: int,
-    quantity_change: int = Query(..., description="Quantity change (positive or negative)"),
+    quantity_change: int = Query(...,
+                                 description="Quantity change (positive or negative)"),
     session: AsyncSession = Depends(get_session)
 ):
     """Update product stock."""
     try:
         product = await ProductService.update_stock(session, product_id, quantity_change)
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Product not found"
-            )
         return product
-    except ValueError as e:
+    except ProductNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except InsufficientStockError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update stock: {str(e)}"
         )
 
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_product(product_id: int, session: AsyncSession = Depends(get_session)):
     """Delete a product."""
-    success = await ProductService.delete_product(session, product_id)
-    if not success:
+    try:
+        await ProductService.delete_product(session, product_id)
+    except ProductNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found"
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete product: {str(e)}"
         )
