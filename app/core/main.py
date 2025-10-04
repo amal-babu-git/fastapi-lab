@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from schemas import Product
-from database import get_session, verify_db_connection, shutdown_db
+from app.core.schemas import Product
+from app.core.database import get_session, verify_db_connection, shutdown_db
 from contextlib import asynccontextmanager
 import logging
 

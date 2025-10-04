@@ -8,7 +8,7 @@ import asyncio
 from dotenv import load_dotenv
 
 # Import Base for re-export
-from models import Base
+from .models import Base
 
 # Load environment variables
 load_dotenv()

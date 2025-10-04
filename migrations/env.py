@@ -10,10 +10,10 @@ from alembic import context
 from dotenv import load_dotenv
 
 # Import your models' Base
-from models import Base
+from app.core.models import Base
 
 # Import centralized database URL builder
-from database import get_database_url
+from app.core.database import get_database_url
 
 # Load environment variables
 load_dotenv()
