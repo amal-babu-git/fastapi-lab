@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from contextlib import asynccontextmanager
 from datetime import datetime
-
 from app.core.database import get_session, verify_db_connection, shutdown_db
 from app.core.settings import settings
 from app.core.middleware import setup_middleware
