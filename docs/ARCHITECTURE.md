@@ -1,224 +1,212 @@
-# FastAPI Learn - Architecture Guide
+# Architecture
 
-## Overview
+This document explains the architectural patterns and design decisions used in this FastAPI base template.
 
-This FastAPI application follows a modular, layered architecture inspired by Django's app structure. Each feature is organized into self-contained apps with clear separation of concerns.
+## Overall Architecture
 
-## Project Structure
+The application follows a **layered architecture** with clear separation of concerns:
 
 ```
-fastapi-learn/
-├── app/
-│   ├── core/                    # Core application components
-│   │   ├── __init__.py
-│   │   ├── main.py             # FastAPI app initialization and core routes
-│   │   ├── database.py         # Database configuration and session management
-│   │   ├── models.py           # Base SQLAlchemy model
-│   │   ├── schemas.py          # Core shared schemas
-│   │   └── crud.py             # Base CRUD class for reusability
-│   └── product/                # Product feature app
-│       ├── __init__.py
-│       ├── models.py           # Product SQLAlchemy models
-│       ├── schemas.py          # Product Pydantic schemas
-│       ├── crud.py             # Product data access layer
-│       ├── services.py         # Product business logic
-│       ├── routes.py           # Product API endpoints
-│       └── README.md           # Product app documentation
-├── migrations/                  # Alembic database migrations
-├── docker-compose.yml          # Container orchestration
-├── Dockerfile                  # Container definition
-├── pyproject.toml             # Project dependencies and configuration
-├── README.md                  # Main project documentation
-└── ARCHITECTURE.md            # This file
+┌─────────────────────────────────────────┐
+│              API Layer                  │
+│         (FastAPI Routes)                │
+├─────────────────────────────────────────┤
+│            Service Layer                │
+│         (Business Logic)                │
+├─────────────────────────────────────────┤
+│             CRUD Layer                  │
+│        (Database Operations)            │
+├─────────────────────────────────────────┤
+│             Model Layer                 │
+│         (SQLAlchemy Models)             │
+├─────────────────────────────────────────┤
+│            Database Layer               │
+│           (PostgreSQL)                  │
+└─────────────────────────────────────────┘
 ```
-
-## Architecture Layers
-
-### 1. Routes Layer (API)
-**Location**: `app/{app_name}/routes.py`
-
-**Responsibilities**:
-- Handle HTTP requests and responses
-- Input validation using Pydantic schemas
-- Error handling and HTTP status codes
-- Dependency injection (database sessions, authentication, etc.)
-- API documentation via FastAPI
-
-**Example**:
-```python
-@router.get("/", response_model=List[Product])
-async def get_all_products(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    session: AsyncSession = Depends(get_session)
-):
-    products = await ProductService.get_all_products(session, skip, limit)
-    return products
-```
-
-### 2. Service Layer (Business Logic)
-**Location**: `app/{app_name}/services.py`
-
-**Responsibilities**:
-- Implement business rules and validation
-- Coordinate between different CRUD operations
-- Handle complex business workflows
-- Provide a clean interface for the routes layer
-
-**Example**:
-```python
-@staticmethod
-async def create_product(session: AsyncSession, product_data: ProductCreate) -> ProductModel:
-    # Business logic: Check if product name already exists
-    existing_product = await product_crud.get_by_name(session, product_data.name)
-    if existing_product:
-        raise ValueError(f"Product with name '{product_data.name}' already exists")
-    
-    # Business logic: Validate minimum price
-    if product_data.price < 0.01:
-        raise ValueError("Product price must be at least $0.01")
-    
-    return await product_crud.create(session, obj_in=product_data)
-```
-
-### 3. CRUD Layer (Data Access)
-**Location**: `app/{app_name}/crud.py`
-
-**Responsibilities**:
-- Direct database operations (Create, Read, Update, Delete)
-- Query optimization and database-specific logic
-- Data transformation between database and application models
-- Extend the base CRUD class for common operations
-
-**Example**:
-```python
-class ProductCRUD(CRUDBase[ProductModel, ProductCreate, ProductUpdate]):
-    def __init__(self):
-        super().__init__(ProductModel)
-
-    async def get_by_name(self, session: AsyncSession, name: str) -> Optional[ProductModel]:
-        result = await session.execute(
-            select(ProductModel).where(ProductModel.name == name)
-        )
-        return result.scalar_one_or_none()
-```
-
-### 4. Models Layer (Data)
-**Location**: `app/{app_name}/models.py`
-
-**Responsibilities**:
-- Define database schema using SQLAlchemy
-- Relationships between tables
-- Database constraints and indexes
-
-### 5. Schemas Layer (Validation)
-**Location**: `app/{app_name}/schemas.py`
-
-**Responsibilities**:
-- Input/output validation using Pydantic
-- Data serialization/deserialization
-- API documentation schema
 
 ## Core Components
 
-### Database Management (`app/core/database.py`)
-- Async SQLAlchemy engine and session management
-- Connection pooling and configuration
-- Database URL construction from environment variables
-- Health check and startup verification
+### 1. FastAPI Application (`app/core/main.py`)
+- Central application instance
+- Middleware configuration
+- Exception handler registration
+- Router inclusion and API versioning
 
-### Base CRUD (`app/core/crud.py`)
-- Generic CRUD operations that can be inherited
-- Type-safe operations using Python generics
-- Common database patterns (pagination, filtering, etc.)
+### 2. Database Layer (`app/core/database.py`)
+- Async SQLAlchemy engine configuration
+- Session management with dependency injection
+- Connection pooling and lifecycle management
 
-### Main Application (`app/core/main.py`)
-- FastAPI app initialization
-- Router registration
-- Lifespan events (startup/shutdown)
-- Core endpoints (health check, database test)
+### 3. Settings Management (`app/core/settings.py`)
+- Pydantic-based configuration
+- Environment variable handling
+- Type-safe settings with validation
 
-## Design Principles
+### 4. Modular Design
+Each feature module contains:
+- **Models**: Database schema definition
+- **Schemas**: API input/output validation
+- **CRUD**: Database operation abstraction
+- **Services**: Business logic implementation
+- **Routes**: API endpoint definitions
 
-### 1. Separation of Concerns
-Each layer has a single responsibility:
-- **Routes**: Handle HTTP protocol
-- **Services**: Implement business logic
-- **CRUD**: Manage data access
-- **Models**: Define data structure
+## Design Patterns
 
-### 2. Dependency Inversion
-Higher-level modules don't depend on lower-level modules. Both depend on abstractions:
-- Services depend on CRUD interfaces, not implementations
-- Routes depend on service interfaces
-- Database sessions are injected as dependencies
+### 1. Dependency Injection
+```python
+# Database session injection
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session() as session:
+        yield session
 
-### 3. Single Responsibility Principle
-Each class and function has one reason to change:
-- CRUD classes handle only data operations
-- Service classes handle only business logic
-- Route functions handle only HTTP concerns
+# Usage in routes
+@router.get("/products/")
+async def get_products(db: AsyncSession = Depends(get_db)):
+    return await product_service.get_all(db)
+```
 
-### 4. Open/Closed Principle
-The architecture is open for extension but closed for modification:
-- New apps can be added without changing existing code
-- Base CRUD class can be extended for specific needs
-- New business rules can be added to services without changing CRUD
+### 2. Repository Pattern (CRUD Layer)
+```python
+# Base CRUD operations
+class BaseCRUD:
+    async def get(self, db: AsyncSession, id: int)
+    async def create(self, db: AsyncSession, obj_in: BaseModel)
+    async def update(self, db: AsyncSession, db_obj, obj_in)
+    async def delete(self, db: AsyncSession, id: int)
+```
 
-## Adding New Apps
+### 3. Service Layer Pattern
+```python
+# Business logic separation
+class ProductService:
+    def __init__(self, crud: ProductCRUD):
+        self.crud = crud
+    
+    async def create_product_with_validation(self, db, product_data):
+        # Business logic here
+        return await self.crud.create(db, product_data)
+```
 
-To add a new feature app (e.g., `user`, `order`):
+### 4. Schema Validation
+```python
+# Input validation
+class ProductCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    price: Decimal = Field(..., gt=0)
 
-1. **Create app directory**: `app/new_app/`
-2. **Add required files**:
-   ```
-   app/new_app/
-   ├── __init__.py
-   ├── models.py      # SQLAlchemy models
-   ├── schemas.py     # Pydantic schemas
-   ├── crud.py        # Data access layer
-   ├── services.py    # Business logic
-   ├── routes.py      # API endpoints
-   └── README.md      # App documentation
-   ```
-3. **Register router** in `app/core/main.py`:
-   ```python
-   from app.new_app.routes import router as new_app_router
-   app.include_router(new_app_router)
-   ```
-4. **Import models** in `migrations/env.py` for Alembic:
-   ```python
-   from app.new_app.models import NewModel  # noqa: F401
-   ```
+# Output serialization
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    price: Decimal
+    created_at: datetime
+```
 
-## Benefits
+## Async Architecture
 
-### Maintainability
-- Clear separation makes code easier to understand and modify
-- Changes in one layer don't affect others
-- Business logic is centralized and testable
+### Database Operations
+- All database operations are async using `asyncpg`
+- Connection pooling for optimal performance
+- Proper session lifecycle management
 
-### Scalability
-- New features can be added as separate apps
-- Database operations are optimized in the CRUD layer
-- Services can be easily cached or moved to separate microservices
+### Request Handling
+- Async route handlers for non-blocking I/O
+- Concurrent request processing
+- Efficient resource utilization
 
-### Testability
-- Each layer can be tested independently
-- Business logic can be tested without database
-- CRUD operations can be tested with test databases
+## Error Handling Strategy
 
-### Reusability
-- Base CRUD class reduces code duplication
-- Common patterns are abstracted
-- Services can be reused across different interfaces (API, CLI, etc.)
+### 1. Layered Exception Handling
+```python
+# Custom exceptions
+class ProductNotFoundError(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=404, detail="Product not found")
 
-## Best Practices
+# Global exception handlers
+@app.exception_handler(ProductNotFoundError)
+async def product_not_found_handler(request, exc):
+    return JSONResponse(status_code=404, content={"error": "Product not found"})
+```
 
-1. **Keep routes thin**: Move business logic to services
-2. **Keep services focused**: One service per business domain
-3. **Use type hints**: Leverage Python's type system for better IDE support
-4. **Handle errors appropriately**: Use specific exceptions and proper HTTP status codes
-5. **Document your APIs**: Use Pydantic schemas and FastAPI's automatic documentation
-6. **Test each layer**: Unit tests for services, integration tests for routes
-7. **Use dependency injection**: Makes code more testable and flexible
+### 2. Validation Errors
+- Automatic Pydantic validation
+- Structured error responses
+- Client-friendly error messages
+
+## Security Architecture
+
+### 1. Environment-based Configuration
+- Sensitive data in environment variables
+- No hardcoded secrets in code
+- Separate configs for different environments
+
+### 2. Database Security
+- Connection pooling with proper limits
+- SQL injection prevention through ORM
+- Async operations for better resource management
+
+## Scalability Considerations
+
+### 1. Modular Structure
+- Easy to add new features without affecting existing code
+- Clear boundaries between modules
+- Independent testing and deployment of modules
+
+### 2. Database Design
+- Async operations for high concurrency
+- Proper indexing strategies
+- Migration system for schema evolution
+
+### 3. Containerization
+- Docker for consistent environments
+- Easy horizontal scaling
+- Resource isolation and management
+
+## Development Workflow
+
+### 1. Code Organization
+```
+Feature Development Flow:
+1. Define models (database schema)
+2. Create schemas (API validation)
+3. Implement CRUD operations
+4. Add business logic in services
+5. Create API routes
+6. Write tests
+7. Update documentation
+```
+
+### 2. Database Changes
+```
+Migration Workflow:
+1. Modify models
+2. Generate migration: alembic revision --autogenerate
+3. Review migration file
+4. Apply migration: alembic upgrade head
+```
+
+### 3. API Versioning
+- Routes organized under `/api/v1/`
+- Easy to add new versions without breaking existing clients
+- Backward compatibility considerations
+
+## Performance Optimizations
+
+### 1. Database
+- Async operations prevent blocking
+- Connection pooling reduces overhead
+- Lazy loading and eager loading strategies
+
+### 2. API
+- Automatic response caching headers
+- Efficient serialization with Pydantic
+- Minimal data transfer with proper schemas
+
+### 3. Development
+- Hot reload for fast development cycles
+- Automatic API documentation generation
+- Built-in debugging and logging
+
+This architecture provides a solid foundation that can scale from small projects to large applications while maintaining code quality and developer productivity.
