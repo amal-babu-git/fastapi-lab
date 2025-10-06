@@ -1,79 +1,157 @@
 # FastAPI Learn
 
-A modular FastAPI application with PostgreSQL database, containerized with Docker and Docker Compose.
+A production-ready FastAPI application with PostgreSQL, built with industry-standard practices and full Docker support.
 
-## Features
+## ✨ Features
 
-- FastAPI web framework with async support
-- PostgreSQL database with async drivers (asyncpg)
-- SQLAlchemy ORM with async sessions
-- Modular Django-style app architecture
-- UV package manager for fast dependency management
-- Docker containerization with production-ready practices
-- Docker Compose for orchestration
-- Health checks for containers
-- Environment-based configuration
-- Production-ready security practices
+- ⚡ **FastAPI** - Modern async web framework
+- 🐘 **PostgreSQL** - Async database with SQLAlchemy
+- � **Docker** - Single config with hot reload
+- � **Alembic** - Database migrations
+- � **UV** - Fast package manager
+- 🔐 **Security** - Best practices built-in
+- 📝 **Auto Docs** - OpenAPI/Swagger UI
+- 🏗️ **Modular** - Django-style architecture
 
-## Development Setup
+## 🚀 Quick Start with Docker
 
-### Prerequisites
-- Python 3.13+
-- UV package manager
-- Docker & Docker Compose
-
-### Local Development
 ```bash
-# Install UV if not already installed
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# 1. Copy environment file
+cp .env.example .env
 
-# Install dependencies
-uv sync
+# 2. Edit .env - Update these values:
+#    POSTGRES_PASSWORD=your_secure_password
+#    SECRET_KEY=your_secret_key
 
-# Run the application
-uv run uvicorn main:app --reload
+# 3. Start everything
+docker-compose up --build -d
+
+# 4. Visit http://localhost:8000/docs
 ```
 
-### Docker Development
+**That's it!** 🎉
+
+### View Logs
 ```bash
-# Build and run with Docker Compose
-docker-compose up --build
+docker-compose logs -f api
+```
 
-# Access services:
-# - FastAPI: http://localhost:8000
-# - pgAdmin: http://localhost:5050 (admin@example.com / admin)
-# - PostgreSQL: localhost:5432
-
-# Stop services
+### Stop Services
+```bash
 docker-compose down
 ```
 
-### Adding Dependencies
+## 📋 Prerequisites
+
+**For Docker (Recommended):**
+- Docker 20.10+
+- Docker Compose 2.0+
+
+**For Local Development:**
+- Python 3.13+
+- PostgreSQL 16+
+- UV package manager
+
+## 🐳 Docker Setup (Detailed)
+
+### First Time Setup
+
 ```bash
-# Add production dependency
-uv add package-name
+# 1. Setup environment
+make setup              # or: cp .env.example .env
+# Edit .env with your passwords
 
-# Add development dependency
-uv add --dev package-name
+# 2. Build and start
+make up-build          # or: docker-compose up --build -d
+
+# 3. Check status
+make ps                # or: docker-compose ps
+
+# 4. View logs
+make logs-api          # or: docker-compose logs -f api
 ```
 
-## Project Structure
+### Common Commands
+
+```bash
+# View all available commands
+make help
+
+# Start services
+make up
+
+# View logs
+make logs-api
+
+# Access API shell
+make shell-api
+
+# Run migrations
+make migrate
+
+# Restart API
+make restart-api
+
+# Stop everything
+make down
+```
+
+### Features Included
+
+✅ **Hot Reload** - Edit code, see changes instantly  
+✅ **Auto Migrations** - Runs on startup  
+✅ **Health Checks** - Built-in monitoring  
+✅ **Persistent Data** - PostgreSQL volume  
+✅ **Logs** - Mounted to `./logs`  
+
+## 💻 Local Development (Without Docker)
+
+If you prefer running without Docker:
+
+```bash
+# 1. Install PostgreSQL 16+
+
+# 2. Copy and edit environment
+cp .env.example .env
+# Set POSTGRES_HOST=localhost in .env
+
+# 3. Install UV
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 4. Install dependencies
+uv sync
+
+# 5. Run migrations
+alembic upgrade head
+
+# 6. Start application
+uv run python run_dev.py
+```
+
+## 📁 Project Structure
 
 ```
-app/
-├── core/                    # Core application components
-│   ├── __init__.py
-│   ├── main.py             # FastAPI app and core routes
-│   ├── database.py         # Database configuration and session management
-│   ├── models.py           # Base SQLAlchemy model
-│   └── schemas.py          # Core shared schemas
-└── product/                # Product app module
-    ├── __init__.py
-    ├── models.py           # Product SQLAlchemy models
-    ├── schemas.py          # Product Pydantic schemas
-    ├── services.py         # Product business logic
-    ├── routes.py           # Product API endpoints
-    └── README.md           # Product app documentation
+fastapi-learn/
+├── docker/                  # Docker configuration
+│   ├── Dockerfile          # Multi-stage production build
+│   └── docker-entrypoint.sh # Container startup script
+├── docker-compose.yml       # Service orchestration
+├── .dockerignore           # Docker build exclusions
+├── .env.example            # Environment template
+├── Makefile                # Convenient commands
+├── app/                    # Application code
+│   ├── core/               # Core components
+│   │   ├── main.py        # FastAPI app
+│   │   ├── database.py    # Database config
+│   │   ├── settings.py    # Settings management
+│   │   └── ...
+│   └── product/           # Product module
+│       ├── models.py
+│       ├── routes.py
+│       └── ...
+├── migrations/            # Alembic migrations
+├── docs/                  # Documentation
+└── logs/                  # Application logs
 ```
 
 ## API Endpoints

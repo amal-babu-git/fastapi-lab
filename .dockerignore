@@ -93,11 +93,20 @@ wheels/
 .editorconfig
 .pre-commit-config.yaml
 
-# Alembic (if you run migrations in container, you might want to include these)
-# migrations/
+# Alembic - Keep migrations but exclude cache
+migrations/__pycache__/
+migrations/versions/__pycache__/
 
-# Project specific - adjust as needed
-# If you have large test data or fixtures
+# Development scripts
+run_dev.py
+test_*.py
+manage.py
+
+# UV cache
+.uv_cache/
+
+# Keep these markdown files in app modules
+!app/**/*.md
 tests/fixtures/
 tests/data/
 
